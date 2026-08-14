@@ -1,0 +1,1 @@
+{"name":"@goodmorning/gm-pwa-build","private":true,"type":"module","scripts":{"build":"tsc -p tsconfig.json"},"dependencies":{"@types/react":"19.1.8","@types/react-dom":"19.1.6","react":"19.1.0","typescript":"5.8.3"}}

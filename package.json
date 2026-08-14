@@ -1,0 +1,12 @@
+{
+  "name": "@goodmorning/gm-pwa",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "main": "frontend/dist/index.js",
+  "types": "frontend/dist/index.d.ts",
+  "files": ["frontend/dist"],
+  "scripts": {"build": "npm --prefix frontend run build", "prepare": "npm run build"},
+  "peerDependencies": {"react": ">=18"},
+  "devDependencies": {"@types/react": "19.1.8", "@types/react-dom": "19.1.6", "react": "19.1.0", "typescript": "5.8.3"}
+}
