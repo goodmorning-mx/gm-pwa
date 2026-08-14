@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 export interface PwaConfig { appName: string; version: string; serviceWorkerUrl?: string; updateIntervalMs?: number }
 export interface PwaInstallState { installed: boolean; installReady: boolean; guideOpen: boolean; install: () => Promise<void>; closeGuide: () => void }
 export interface PwaUpdateState { updateReady: boolean; updating: boolean; update: () => Promise<void> }
+export interface PwaStatusState { online: boolean }
 
 interface InstallPrompt extends Event { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> }
 const standalone = () => typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true)
@@ -25,6 +26,18 @@ export function usePwaInstall(): PwaInstallState {
     const prompt = promptRef.current; await prompt.prompt(); await prompt.userChoice; promptRef.current = null; setInstallReady(false)
   }, [])
   return { installed, installReady, guideOpen, install, closeGuide: () => setGuideOpen(false) }
+}
+
+export function usePwaStatus(): PwaStatusState {
+  const [online, setOnline] = useState(() => typeof navigator === 'undefined' ? true : navigator.onLine)
+  useEffect(() => {
+    const onOnline = () => setOnline(true)
+    const onOffline = () => setOnline(false)
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+    return () => { window.removeEventListener('online', onOnline); window.removeEventListener('offline', onOffline) }
+  }, [])
+  return { online }
 }
 
 export function usePwaUpdate(config: Pick<PwaConfig, 'serviceWorkerUrl' | 'version' | 'updateIntervalMs'>): PwaUpdateState {
@@ -60,12 +73,29 @@ export function usePwaUpdate(config: Pick<PwaConfig, 'serviceWorkerUrl' | 'versi
   return { updateReady, updating, update }
 }
 
+export function PwaStatus() {
+  const { online } = usePwaStatus()
+  return <span className={`gm-pwa-status gm-pwa-status-${online ? 'online' : 'offline'}`} role="status" aria-live="polite">{online ? 'En línea' : 'Sin conexión · modo offline'}</span>
+}
+
+export function PwaInstallPrompt({ appName }: { appName: string }) {
+  const install = usePwaInstall()
+  if (install.installed) return null
+  return <button className="gm-pwa-button" type="button" onClick={() => void install.install()}>{install.installReady ? `Instalar ${appName}` : 'Cómo instalar esta app'}</button>
+}
+
+export function PwaUpdatePrompt({ config }: { config: Pick<PwaConfig, 'serviceWorkerUrl' | 'version' | 'updateIntervalMs'> }) {
+  const update = usePwaUpdate(config)
+  if (!update.updateReady) return null
+  return <button className="gm-pwa-button gm-pwa-update" type="button" onClick={() => void update.update()} disabled={update.updating}>{update.updating ? 'Actualizando…' : 'Nueva versión disponible · Actualizar'}</button>
+}
+
 export function PwaRuntime({ config, children }: { config: PwaConfig; children: React.ReactNode }) {
   const install = usePwaInstall(); const update = usePwaUpdate(config)
   if (install.installed && !update.updateReady) return <>{children}</>
   return <>
     {children}
-    <div className="gm-pwa-actions" aria-live="polite">
+    <div className="gm-pwa-actions" data-pwa-version={config.version} aria-live="polite">
       {update.updateReady ? <button className="gm-pwa-button gm-pwa-update" type="button" onClick={() => void update.update()} disabled={update.updating}>{update.updating ? 'Actualizando…' : 'Nueva versión disponible · Actualizar'}</button> : <button className="gm-pwa-button" type="button" onClick={() => void install.install()}>{install.installReady ? `Instalar ${config.appName}` : 'Cómo instalar esta app'}</button>}
     </div>
     {install.guideOpen && <div className="gm-pwa-backdrop" role="presentation" onClick={install.closeGuide}><section className="gm-pwa-sheet" role="dialog" aria-modal="true" aria-labelledby="gm-pwa-title" onClick={event => event.stopPropagation()}><button className="gm-pwa-close" type="button" aria-label="Cerrar instrucciones" onClick={install.closeGuide}>×</button><h2 id="gm-pwa-title">Instalar {config.appName}</h2><ol>{ios() ? <><li>Abre esta página en Safari.</li><li>Presiona Compartir.</li><li>Selecciona “Añadir a pantalla de inicio”.</li></> : <><li>Abre el menú de tu navegador.</li><li>Selecciona “Instalar aplicación” o “Agregar a pantalla de inicio”.</li></>}</ol></section></div>}
