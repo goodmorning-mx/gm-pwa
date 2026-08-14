@@ -1,6 +1,6 @@
 {
   "name": "@goodmorning/gm-pwa",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": false,
   "type": "module",
   "main": "frontend/dist/index.js",
