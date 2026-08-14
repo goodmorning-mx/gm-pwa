@@ -1,2 +1,2 @@
-export { PwaRuntime, usePwaInstall, usePwaUpdate } from './runtime'
-export type { PwaConfig, PwaInstallState, PwaUpdateState } from './runtime'
+export { PwaInstallPrompt, PwaRuntime, PwaStatus, PwaUpdatePrompt, usePwaInstall, usePwaStatus, usePwaUpdate } from './runtime'
+export type { PwaConfig, PwaInstallState, PwaStatusState, PwaUpdateState } from './runtime'
