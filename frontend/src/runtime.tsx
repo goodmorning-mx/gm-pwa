@@ -91,13 +91,11 @@ export function PwaUpdatePrompt({ config }: { config: Pick<PwaConfig, 'serviceWo
 }
 
 export function PwaRuntime({ config, children }: { config: PwaConfig; children: React.ReactNode }) {
-  const install = usePwaInstall(); const update = usePwaUpdate(config)
-  if (install.installed && !update.updateReady) return <>{children}</>
+  const update = usePwaUpdate(config)
   return <>
     {children}
-    <div className="gm-pwa-actions" data-pwa-version={config.version} aria-live="polite">
-      {update.updateReady ? <button className="gm-pwa-button gm-pwa-update" type="button" onClick={() => void update.update()} disabled={update.updating}>{update.updating ? 'Actualizando…' : 'Nueva versión disponible · Actualizar'}</button> : <button className="gm-pwa-button" type="button" onClick={() => void install.install()}>{install.installReady ? `Instalar ${config.appName}` : 'Cómo instalar esta app'}</button>}
-    </div>
-    {install.guideOpen && <div className="gm-pwa-backdrop" role="presentation" onClick={install.closeGuide}><section className="gm-pwa-sheet" role="dialog" aria-modal="true" aria-labelledby="gm-pwa-title" onClick={event => event.stopPropagation()}><button className="gm-pwa-close" type="button" aria-label="Cerrar instrucciones" onClick={install.closeGuide}>×</button><h2 id="gm-pwa-title">Instalar {config.appName}</h2><ol>{ios() ? <><li>Abre esta página en Safari.</li><li>Presiona Compartir.</li><li>Selecciona “Añadir a pantalla de inicio”.</li></> : <><li>Abre el menú de tu navegador.</li><li>Selecciona “Instalar aplicación” o “Agregar a pantalla de inicio”.</li></>}</ol></section></div>}
+    {update.updateReady && <div className="gm-pwa-actions" data-pwa-version={config.version} aria-live="polite">
+      <button className="gm-pwa-button gm-pwa-update" type="button" onClick={() => void update.update()} disabled={update.updating}>{update.updating ? 'Actualizando…' : 'Nueva versión disponible · Actualizar'}</button>
+    </div>}
   </>
 }
