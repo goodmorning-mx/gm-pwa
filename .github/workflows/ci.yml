@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [dev, main]
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Check package versions match
+        run: |
+          test "$(node -p 'require("./package.json").version')" = "$(node -p 'require("./goodmorning.module.json").version')"
+      - run: npm run build
+      - run: npm pack
+      - name: Install and import packed package in a clean consumer
+        run: |
+          set -euo pipefail
+          tarball="$(find "$GITHUB_WORKSPACE" -maxdepth 1 -name 'goodmorning-gm-pwa-*.tgz' -print -quit)"
+          consumer="$(mktemp -d)"
+          cd "$consumer"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund react@18 "$tarball"
+          node --input-type=module -e "import('@goodmorning/gm-pwa').then(m => { if (!m.PwaRuntime || !m.PwaUpdatePrompt || !m.PwaInstallPrompt) process.exit(1) })"
